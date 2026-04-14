@@ -1,7 +1,7 @@
 "use client";
 
-import { Message } from "@/lib/types";
 import { consumeSseChunk, flushSsePending } from "@/lib/sse";
+import { Message } from "@/lib/types";
 import { useCallback, useRef, useState } from "react";
 
 interface UseChatStreamParams {
@@ -46,6 +46,9 @@ export function useChatStream({
       setStreamingContent("");
       abortRef.current = new AbortController();
 
+      // sseState holds parser progress across chunk boundaries.
+      let sseState = { pending: "", content: "", done: false };
+
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
@@ -69,8 +72,6 @@ export function useChatStream({
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        // sseState holds parser progress across chunk boundaries.
-        let sseState = { pending: "", content: "", done: false };
 
         while (!sseState.done) {
           const { done, value } = await reader.read();
@@ -97,7 +98,19 @@ export function useChatStream({
         onMessagesChange(targetSessionId, [...next, assistantMsg]);
         setStreamingContent("");
       } catch (e) {
-        if ((e as Error).name === "AbortError") return;
+        if ((e as Error).name === "AbortError") {
+          // Commit whatever partial content was streamed before the user stopped.
+          if (sseState.content) {
+            const partial: Message = {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: sseState.content,
+              timestamp: Date.now(),
+            };
+            onMessagesChange(targetSessionId, [...next, partial]);
+          }
+          return;
+        }
         setError((e as Error).message ?? "Something went wrong.");
       } finally {
         setLoading(false);
@@ -110,10 +123,8 @@ export function useChatStream({
   );
 
   const stop = useCallback(() => {
-    // Aborts the fetch and clears transient streaming UI state.
+    // Aborts the fetch
     abortRef.current?.abort();
-    setLoading(false);
-    setStreamingContent("");
   }, []);
 
   return {
