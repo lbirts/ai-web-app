@@ -40,5 +40,5 @@ export function createSession(): ChatSession {
 export function deriveTitle(messages: Message[]): string {
   const first = messages.find((m) => m.role === "user");
   if (!first) return "New chat";
-  return first.content.slice(0, 30) + (first.content.length > 30 ? "..." : "");
+  return first.content.slice(0, 25) + (first.content.length > 25 ? "..." : "");
 }

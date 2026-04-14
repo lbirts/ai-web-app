@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ChatSession } from "@/lib/types";
-import { Delete, PlaneTakeoffIcon, PlusIcon, Search } from "lucide-react";
-import { useState } from "react";
+import { Delete, Moon, PlaneTakeoffIcon, PlusIcon, Search, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 import DeleteConfirmation from "./DeleteConfirmation";
 import SearchDialog from "./SearchDialog";
 
@@ -20,10 +20,23 @@ export default function Sidebar({
   onDelete,
   onClearAll,
 }: Props) {
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const storedTheme = localStorage.getItem("theme");
+    if (storedTheme === "light" || storedTheme === "dark") return storedTheme;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  });
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [pendingDeleteSession, setPendingDeleteSession] =
     useState<ChatSession | null>(null);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   const isDeleteConfirmationOpen =
     showClearAllConfirm || pendingDeleteSession !== null;
@@ -46,11 +59,26 @@ export default function Sidebar({
     setPendingDeleteSession(null);
   };
 
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+  };
+
   return (
     <aside className="w-55 gap-4 flex flex-col">
-      <div className="flex items-center gap-2">
-        <PlaneTakeoffIcon />
-        <p className="font-mono text-lg font-medium">Trip Planner</p>
+      <div className="flex items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          <PlaneTakeoffIcon />
+          <p className="font-mono text-lg font-medium">Trip Planner</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          {theme === "dark" ? <Sun /> : <Moon />}
+        </Button>
       </div>
       <div className="flex flex-col gap-1">
         <Button
