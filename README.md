@@ -1,17 +1,22 @@
 ## Getting Started
 
-git clone `<my-repo>`
-cd ai-chat-app
+```bash
+git clone <my-repo-url>
 npm install
+```
 
-# Create .env.local with:
+Create a `.env.local` file in the project root:
 
-# OPENAI_API_KEY=your_key_here
+```bash
+OPENAI_API_KEY=your_key_here
+# Optional: free local testing without OpenAI charges
+MOCK_OPENAI=true
+```
 
-# Optional for free local testing (no OpenAI charges):
+Start the app:
 
-# MOCK_OPENAI=true
-
+```bash
 npm run dev
+```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
